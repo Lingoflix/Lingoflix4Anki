@@ -86,13 +86,13 @@ function getVideoSuggestions() {
       // Create a new div container for the video and button
       container = document.getElementById(`video${index}cont`)
       if (container === null) {
-        document.createElement("div");
+        container = document.createElement("div");
         container.id = `video${index}cont`
         container.style.cssText = "display:flex;flex-direction:row;align-items:center;margin:10px;"
       }
 
       // Div for subtitles and button
-      captionDiv = container.
+      // captionDiv = container.
       const captionDiv =  document.createElement("div");
       captionDiv.id = 'captionDiv';
       captionDiv.innerHTML = videoData.subtitles;
