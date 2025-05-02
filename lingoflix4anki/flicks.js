@@ -1,5 +1,6 @@
 var videoSuggestions = Array(); // We will append the videos here
-
+const displayedVideos =3;
+lastDisplayedVideoIndex = 0;
 
 function processResponse(response) {
   if (!response.ok) {
@@ -12,128 +13,127 @@ function processResponse(response) {
   }
 }
 
-function parseURLs(htmlText) {
+function parseVideos(htmlText) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlText, "text/html");
-  const links = [];
+  i = 0;
 
-  for (let i = 1; i <= 3; i++) {
-      //  Select video card
-      const vcard = doc.querySelector(`#vcard${i}`);
-      if (!vcard) return Array();
+  console.log(`html length: ${htmlText.length}`)
 
-      // Select URL
-      const rawURL = vcard.querySelector("a[href][target]").getAttribute("href");
-      const url = rawURL.replace("watch?v=", "embed/").replace("&t=", "?start=");
+  while (true) {
+    //  Select video card
+    const vcard = doc.querySelector(`#vcard${i+1}`);
+    
+    if (!vcard) break
+    i++;
 
-      // Select subtitles
-      subtitles = vcard.querySelector('.scroll-box').innerHTML;
-      // subtitles = subtitles.replace(/！|？|・|。/g, '<br>')
-      subtitles = subtitles.replace("！", '！<br>')
-      subtitles = subtitles.replace("？", '？<br>')
-      subtitles = subtitles.replace("・", '・<br>')
-      subtitles = subtitles.replace("。", '。<br>')
+    // Select URL
+    const rawURL = vcard.querySelector("a[href][target]").getAttribute("href");
+    const url = rawURL.replace("watch?v=", "embed/").replace("&t=", "?start=");
 
-      links.push({
-        "url": url,
-        "subtitles": subtitles
-      });
+    // Select subtitles
+    subtitles = vcard.querySelector('.scroll-box').innerHTML;
+    
+    // CLeanup subtitles for readability
+    subtitles = subtitles.replace("！", '！<br>')
+    subtitles = subtitles.replace("？", '？<br>')
+    subtitles = subtitles.replace("・", '・<br>')
+    subtitles = subtitles.replace("。", '。<br>')
+
+    videoSuggestions.push({
+      "url": url,
+      "subtitles": subtitles
+    });
   }
-  
-  console.log(links);
-  return links
+  console.log(videoSuggestions)
+  return videoSuggestions
 }
 
 function notifyUser(msg) {
   document.getElementById("response").innerText = msg;
 }
 
-notifyUser(`Search videos for ${kanjis}`)
+function removeVideo(index) {
+  const vid = document.getElementById(`video${index}cont`)
+  vid.remove();
+}
 
-function getVideoSuggestions() {
-  const kanji = document.getElementById("kanjiTextbox").value
-  notifyUser(`Searching videos for "${kanji}" ...`);
+function buildVideoContainer(videoData, index) {
+  notifyUser(`Embedding ${videoData}...`);
+  console.log(`Embedding ${videoData}...`);
+  container = document.createElement("div");
+  container.id = `video${index}cont`
+  container.style.cssText = "display:flex;flex-direction:row;align-items:center;margin:10px;"
 
-  fetch("http://localhost:8766/getVideoSuggestions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ word: kanji })
-  })
-  .then(async response => {
-    // if (!response.ok) {
-    //   const errorMsg = `Error on getting videos: [${response.status}] ${response.text}`
-    //   notifyUser(errorMsg);
-    //   throw new Error(errorMsg); 
-    // }
+  // Div for subtitles and button
+  // captionDiv = container.
+  container.innerHTML += `<div id="captionDiv"> ${videoData.subtitles} </div>`
+  captionDiv = container.querySelector('div')
+
+  // Create "Add to flashcard" button
+  captionDiv.innerHTML += `<button id="addToFlashCardButton_${index}">Add to flashcard</button>`
+  captionDiv.innerHTML += `<button id="removeVideo_${index}" onclick="removeVideo(${index})">Remove</button>`
+  // button.onclick = () => saveVideoToNote(button.id); 
+  container.appendChild(captionDiv);
+  
+  // Create the div for the YouTube player
+  iframeId = `yt-player-${index}`
+  container.innerHTML += `<div id="${iframeId}"></>`
+  
+  // Append the button and video player div to the container
+  const videoGrid = document.querySelector(".video-grid");
+  videoGrid.appendChild(container);
+  
+  // Store video data for later use
+  const url = new URL(videoData.url);
+  videoSuggestions.push(url);
+  const videoId = url.pathname.split("/").pop();
+  const rawStart = url.searchParams.get("start");
+  const startTime = rawStart ? parseInt(rawStart.replace("s", "")) : 0;
+  createVideoPlayer(iframeId, videoId, startTime);
+  notifyUser(`To embed a video, click on the button !`);
+}
+
+kanji = document.getElementById("kanjiTextbox").value
+notifyUser(`Search videos for ${kanji}`)
+
+async function getVideoSuggestions() {
+
+  if (videoSuggestions.length === 0) {
+
+    kanji = document.getElementById("kanjiTextbox").value
+    notifyUser(`Searching videos for "${kanji}" ...`);
+    
+    const response = await fetch("http://localhost:8766/getVideoSuggestions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ word: kanji })
+    })
+  if (!response.ok) {
+      const errorMsg = `Error on getting videos: [${response.status}] ${response.text}`
+      notifyUser(errorMsg);
+      throw new Error(errorMsg); 
+    }
     notifyUser(`Parsing response [${response.status}]...`);
-    return response.text()
-  })
-  // .catch(error => {
-  //   document.getElementById("response").innerText = "Error: " + error;
-  // })
-  .then(htmlText => parseURLs(htmlText))
-  .then(results => {
+    console.log(response)
+    html = await response.text()
+    const results = parseVideos(html)
     if (results.length === 0) {
-      // notifyUser("No videos found.");
+      notifyUser("No videos found.");
       return;
     }
     notifyUser(`Found ${results.length} videos ...`);
-    
-    results.forEach((videoData, index) => {
-      notifyUser(`Embedding ${videoData.url}...`);
-      // Create a new div container for the video and button
-      container = document.getElementById(`video${index}cont`)
-      if (container === null) {
-        container = document.createElement("div");
-        container.id = `video${index}cont`
-        container.style.cssText = "display:flex;flex-direction:row;align-items:center;margin:10px;"
-      }
+  } 
 
-      // Div for subtitles and button
-      // captionDiv = container.
-      const captionDiv =  document.createElement("div");
-      captionDiv.id = 'captionDiv';
-      captionDiv.innerHTML = videoData.subtitles;
+    // console.log('got here')
 
-      // Create the "Add to flashcard" button
-      const buttonID = `addToFlashCardButton_${index}`;
-      button = document.getElementById(buttonID);
-      if (button === null) {
-        captionDiv.innerHTML += `<button id="${buttonID}">Add to flashcard</button>`
-        // button.onclick = () => attachVideo(button.id); 
-      }
-        
-        // Create the div for the YouTube player
-        const iframeId = `yt-player-${index}`;
-        playerDiv = document.getElementById(iframeId);
-        if (playerDiv === null) {
-          container.innerHTML += `<div id="${iframeId}"></>`
-        }
+    const start = lastDisplayedVideoIndex;
+    const end = lastDisplayedVideoIndex+displayedVideos;
 
-        const videoGrid = document.querySelector(".video-grid");
-        
-        // Append the button and video player div to the container
-        container.appendChild(captionDiv);
-        // container.appendChild(playerDiv);
-        videoGrid.appendChild(container);
-        
-        // Store video data for later use
-        const url = new URL(videoData.url);
-        videoSuggestions.push(url);
-        const videoId = url.pathname.split("/").pop();
-        const rawStart = url.searchParams.get("start");
-        const startTime = rawStart ? parseInt(rawStart.replace("s", "")) : 0;
-        createVideoPlayer(iframeId, videoId, startTime);
-        notifyUser(`To embed a video, click on the button !`);
-
-      });
-    })
-    .catch((err) => {
-      console.error(err);
-      notifyUser(`JS Error : ${err}`);
-    });
+    for (i=start;i<end;i++) buildVideoContainer(videoSuggestions[i], i)
+    // results.forEach((videoData, index) => buildVideoContainer(videoData, index));
 }
 
 function createVideoPlayer(iframeId, videoId, start) {
@@ -173,7 +173,7 @@ function createVideoPlayer(iframeId, videoId, start) {
 
 
 
-function attachVideo(buttonID) {
+function saveVideoToNote(buttonID) {
   // Get index id from button
   const index = buttonID.split("_")[1];
   //  Check the index is a valid integer
@@ -210,20 +210,8 @@ function attachVideo(buttonID) {
   const cardID = card.querySelector("p").textContent.replace("ID: ", "");
   console.log(`Adding video ${videoURL} to flashcard [${cardID}] back field.`);
 
-  addVideoToCard(html)  
-  .then((response) => processResponse(response))
-  .then((data) => {
-    alert(data + " " + data.error);
-    //  Print the object to the console
-    console.log(JSON.stringify(data) + " " + data.error);
-  });
-}
-
-
-
-function addVideoToCard(html) {
   fetch("http://localhost:8765/add_video", {
-    method: method,
+    method: 'POST',
     headers: {
       "Content-Type": "application/json"
     },
@@ -232,8 +220,14 @@ function addVideoToCard(html) {
     })
   })
   .then(response => response.text())
-  .then(data => console.log("Saved:", data));
-
+  .then(data => console.log("Saved:", data))
+  .then((response) => processResponse(response))
+  .then((data) => {
+    alert(data + " " + data.error);
+    //  Print the object to the console
+    console.log(JSON.stringify(data) + " " + data.error);
+  });
 }
+
 
 
