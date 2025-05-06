@@ -41,13 +41,6 @@ def loadMediaFile(fPath) -> str:
     return jssrc
 
 
-def is_kanji(char):
-    if not isinstance(char, str) :
-        raise Exception("Expected string, got", type(char))  
-    else :
-        return '\u4e00' <= char <= '\u9fff'
-
-
 def showMenu(html, card, kind) -> str:
     logger.debug("hook called: " + kind)
 
