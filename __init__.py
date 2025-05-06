@@ -48,27 +48,6 @@ def is_kanji(char):
         return '\u4e00' <= char <= '\u9fff'
 
 
-def getFirstKanjiSequence(front:str) -> str :
-    # if 1+ kanji characters, search (leave an option to change the word)
-    maxlen = len(front)
-    i = -1
-    kanji = ''
-    init = True
-    while i < maxlen :
-        if is_kanji(front[i]) :
-            kanji += front[i]
-            i+=1
-            if init:
-                init = False
-        else :
-            if init :
-                i+=1
-                continue
-            else :
-                break
-    return kanji
-
-
 def showMenu(html, card, kind) -> str:
     logger.debug("hook called: " + kind)
 
@@ -80,7 +59,7 @@ def showMenu(html, card, kind) -> str:
    
     if kind == "reviewAnswer":
         # Parse the Kanji on card question
-        kanji = getFirstKanjiSequence(card.question() )
+        kanji = card.question()
         encoded_kanji = urllib.parse.quote(kanji)
 
         # Load the menu
