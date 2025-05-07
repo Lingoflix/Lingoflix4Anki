@@ -8,9 +8,9 @@ from aqt.qt import *
 from aqt.gui_hooks import card_will_show 
 from aqt.utils import showInfo
 
-from .Logging import logger
+from .scripts.Logging import logger
 
-from . import VideoHandler
+from .scripts import VideoHandler
 
 logpath = pathJoin(os.path.dirname(__file__), 'lingoflix.log')
 
@@ -18,6 +18,27 @@ logpath = pathJoin(os.path.dirname(__file__), 'lingoflix.log')
 # def log(text):
 #     with open(logpath, 'a') as f:
 #         f.write('-'*50 + '\n' + text)
+
+
+def select_platform():
+    platforms  = ['Desktop', 'Android', 'iOS']
+    platform, ok = QInputDialog.getItem(mw, "On what platform will you search for videos ?", "Choose a deck:", platforms, 0, False)
+    return platform
+
+def select_deck():
+    decks = list(mw.col.decks.all_names_and_ids())
+    deck_names = [d.name for d in decks]
+    deck_name, ok = QInputDialog.getItem(mw, "Select Deck", "Choose a deck:", deck_names, 0, False)
+    return deck_name
+
+
+def importMediaFiles(addon='lingoflix4anki'):
+        shutil.copytree(
+            pathJoin(os.path.dirname(__file__), addon), 
+            pathJoin(mw.pm.profileFolder(), "collection.media", addon),
+            dirs_exist_ok=True
+        )
+
 
 
 def _loadFile(componentFpath:str) -> str:
@@ -41,15 +62,9 @@ def loadMediaFile(fPath) -> str:
     return jssrc
 
 
-def showMenu(html, card, kind) -> str:
+def injectInWebview(html, card, kind):
     logger.debug("hook called: " + kind)
 
-    shutil.copytree(
-        pathJoin(os.path.dirname(__file__), 'lingoflix4anki'), 
-        pathJoin(mw.pm.profileFolder(), "collection.media", 'lingoflix4anki'),
-        dirs_exist_ok=True
-    )
-   
     if kind == "reviewAnswer":
         # Parse the Kanji on card question
         kanji = card.question()
@@ -65,13 +80,74 @@ def showMenu(html, card, kind) -> str:
         html += menu
     return html
 
+def injectScript(element, script):
+    element += script
+    return element
+
+
+def getTemplateCopy(template):
+    # if the template does not have a copy :
+    #   Create a template copy
+    #   new_template.back += lingoflixScript
+    # else : 
+    #   Select the new template
+
+    # (Check that the template is not already a copy)
+    return template
+
+
+def injectInTemplateCopy(deck, injection):
+    # Make a copy of the cards' template and inject the lingoflix script in it
+    templates = []
+    # For card in deck.cards :
+    #   new_template = getTemplateCopy(card)
+    #   new_template = injectScript(new_template)
+    #   change card template
+    
+    # Android
+        # HTML/js script
+    # iOS
+        # user prefs: language
+    pass
+
+def showLingoflix() -> str:
+
+    platform = select_platform()
+
+    if platform == 'Desktop' :
+        card_will_show.append(injectInWebview)
+    
+    else : # mobile
+                
+        if platform == 'Android' :
+            # inject script in template copy
+            injection = '<html><src>' # or lambda
+
+        elif platform == 'iOS':
+            injection = '' # or lambda
+
+        deck = select_deck()
+        injectInTemplateCopy(deck, injection)
+    
+
+
             
 if os.path.exists(logpath):
     os.remove(logpath)
 
-action = QAction("🎥 Add context video for Kanji", mw)
-mw.form.menuTools.addAction(action)
-card_will_show.append(showMenu)
+
+# User clicks on "Add Lingoflix to a deck"
+vidAdder = QAction("🎥 Add Lingoflix to flashcards", mw)
+synchronizer = QAction("🎥(for Ankimobile) Synchronize with Lingoflix", mw)
+mw.form.menuTools.addAction(vidAdder)
+mw.form.menuTools.addAction(synchronizer)
+
 VideoHandler.start_server()
 
 
+# aqt extension -----------
+# Chooses the platform: "On what platform will you search for videos ? 
+    # Note: videos will appear in any deck, regardless of the platform you used to add them": Android, iOs
+# chooses the Deck
+# everytime a card is displayed in the given deck, 
+    # a hook is called and a script is injected in the webview.
