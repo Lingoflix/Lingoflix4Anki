@@ -1,12 +1,5 @@
 
 
-
-
-class AddVideoSearcherToCards :
-    def __init__(self):
-        pass
-
-
 # FOR IOS/ANKIMOBILE ONLY
 # After :
 # 1. the VideoSearcher has been added to the cards
@@ -15,10 +8,3 @@ class AddVideoSearcherToCards :
 class SynchronizeWithLingoflix :
     def __init__(self):
         pass
-
-
-
-
-
-
-

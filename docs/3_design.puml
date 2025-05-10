@@ -1,0 +1,101 @@
+@startuml
+
+' DOMAIN LAYER
+package "Domain" {
+    package "Domain.LearningMaterial.FlashcardPlatform" {
+
+        interface FlashcardSoftware
+
+        class Card {
+            - id: str
+            - fields: dict
+            - deck_id: str
+            - features: set
+            + enable_feature(feature: str)
+            + has_feature(feature: str): bool
+        }
+
+        class Deck {
+            - id: str
+            - name: str
+        }
+
+        interface CardRepository {
+            + get_cards_by_deck(deck: Deck): List<Card>
+        }
+
+        interface FeatureInjector {
+            + apply_feature(card: Card, feature: str): void
+        }
+    }
+    class LearningCoach
+
+    class LearningPlan 
+
+    class ProgressTracker
+}
+
+FlashcardSoftware --> Card
+FlashcardSoftware --> CardRepository
+ProgressTracker --> FlashcardSoftware
+Deck --> Card
+
+' APPLICATION LAYER
+package "Application" {
+    class AddFeatureToCards {
+        - repo: CardRepository
+        - injector: FeatureInjector
+        + run(deck: Deck, feature: str): void
+    }
+
+    class GenerateLearningPlan {
+
+    }
+
+    class AddVideoSearcherToCards {
+        - feature_use_case: AddFeatureToCards
+        + run(deck: Deck): void
+    }
+
+    AddVideoSearcherToCards --> AddFeatureToCards
+    AddFeatureToCards --> CardRepository
+    AddFeatureToCards --> FeatureInjector
+    LearningPlan --> GenerateLearningPlan
+}
+
+' ADAPTERS (INFRASTRUCTURE)
+package "Adapters" {
+    class AnkiCardRepository {
+        + get_cards_by_deck(deck: Deck): List<Card>
+    }
+
+    class AnkiFeatureInjector {
+        + apply_feature(card: Card, feature: str): void
+    }
+
+    AnkiCardRepository ..|> CardRepository
+    AnkiFeatureInjector ..|> FeatureInjector
+}
+
+' UI LAYER
+package "UI.AnkiDesktop" {
+    class ToolsMenu {
+        + add_action(label: str, callback: func): void
+    }
+
+    class DeckSelector {
+        + prompt(): Deck
+    }
+
+    ToolsMenu --> AddVideoSearcherToCards : triggers
+    DeckSelector --> AddVideoSearcherToCards : passes Deck
+}
+
+package "UI.WebAnki" {
+
+}
+
+LearningCoach --> LearningPlan
+LearningCoach --> ProgressTracker
+
+@enduml

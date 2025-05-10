@@ -2,15 +2,14 @@
 <div id="response"></div>
 
 <div id="searchBar" style="display:flex;flex-direction:row;align-items:center;margin:10px;justify-content: center;">
-    <input type="text" id="kanjiTextbox" value="">
+    <input type="text" id="kanjiTextbox" value="%kanjiVar%">
     <button id="addVideoButton" onclick="getVideoSuggestions()">Search Videos</button>
 </div>
 
 <div class="video-grid" style="display:grid;"> </div>
 <script>
-    const kanjis= document.getElementById('question-value').textContent;
-    document.getElementById('kanjiTextbox').value = kanjis;
-    
+    const cardFront= '%cardFront%'
+    const kanjis= '%kanjis%'
 </script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="lingoflix4anki/flicks.js"></script>

@@ -1,0 +1,25 @@
+
+@startuml 
+
+package mobile {
+    node iOS {
+        package Ankimobile
+        package iLingoflix
+    }
+    node Android {
+        package Ankidroid
+        package LingoflixDroid
+    }
+}
+
+node Desktop {
+    package Anki
+}
+
+cloud LingoflixWeb {
+
+}
+
+Anki --> LingoflixWeb
+
+@enduml
