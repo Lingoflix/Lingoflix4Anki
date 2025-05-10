@@ -112,7 +112,8 @@ async function getVideoSuggestions() {
       body: JSON.stringify({ word: kanji })
     })
   if (!response.ok) {
-      const errorMsg = `Error on getting videos: [${response.status}] ${response.text}`
+      const text = await response.text();
+      const errorMsg = `Error on getting videos: [${response.status}] ${text}`
       notifyUser(errorMsg);
       throw new Error(errorMsg); 
     }

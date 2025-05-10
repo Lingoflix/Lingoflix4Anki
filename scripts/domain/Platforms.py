@@ -1,6 +1,6 @@
 from enum import Enum
 
-class Platform(Enum):
+class Platforms(Enum):
     DESKTOP = "Desktop"
     ANDROID = "Android"
     IOS = "iOS"
@@ -14,10 +14,11 @@ class Platform(Enum):
     def __hash__(self):
         return hash(self.value)
     def __eq__(self, other):
-        if isinstance(other, Platform):
+        if isinstance(other, Platforms):
             return self.value == other.value
         return False
     def __ne__(self, other):
-        if isinstance(other, Platform):
+        if isinstance(other, Platforms):
             return self.value != other.value
         return True
+

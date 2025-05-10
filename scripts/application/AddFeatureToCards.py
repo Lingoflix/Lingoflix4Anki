@@ -1,7 +1,4 @@
 from scripts.adapters.AnkiFeatureInjector import AnkiFeatureInjector
-from scripts.adapters.AnkiMediaManager import AnkiMediaManager
-
-media = AnkiMediaManager(addon_name="lingoflix4anki")
 
 class AddFeatureToCards:
     def __init__(self, repo, injector):

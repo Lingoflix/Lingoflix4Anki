@@ -13,17 +13,18 @@ class VideoSearcher:
 
     def _html(self) -> Callable:
         # Script to inject in the webview
-        def generateHTML(card) -> str:
-            kanji = card.question()
-            encoded_kanji = urllib.parse.quote(kanji)
+        def generateHTML() -> str:
+            # kanji = card.question()
+            # encoded_kanji = urllib.parse.quote(kanji)
 
             # Load the menu
             media = AnkiMediaManager(addon_name="lingoflix4anki")
+            media.import_all()
             script = media.load_file('menu.html')
             # script = script.replace("'%cardFront%'", f'`{card.question()}`')
             # script = script.replace("%kanjiVar%", kanji)
             # script = script.replace("%kanjis%", encoded_kanji)
-            script += media.load_file("VideoSearcher.js")
+            # script += media.load_file("VideoSearcher.js")
             return script
         
         return generateHTML
