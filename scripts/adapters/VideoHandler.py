@@ -33,16 +33,22 @@ class VideoHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
-    def do_OPTIONS(self):
-        self.send_response(200)
+    def response(self, status_code:int, message:None, headers=[]):
+        self.send_response(status_code)
+        for header in headers:
+            self.send_header(header[0], header[1])
         self._set_cors_headers()
         self.end_headers()
+        if message is not None:
+            self.wfile.write(message.encode("utf-8"))
+
+    def do_OPTIONS(self):
+        self.response(200)
 
     def do_GET(self):
-        print(f"GET request received for path: {self.path}")
-        self.send_response(404)
-        self.end_headers()
-        self.wfile.write(b"GET Not Allowed")
+        logger.error(f"GET request received for path: {self.path}")
+        self.response(404, message=b"GET Not Allowed")
+
 
     def do_POST(self):
         if self.path == "/add_video":
@@ -61,15 +67,11 @@ class VideoHandler(BaseHTTPRequestHandler):
                 note["Back"] += f'<br><iframe width="300" src="{video_url}" frameborder="0"></iframe>'
                 note.flush()  # Save changes
 
-                self.send_response(200)
-                self._set_cors_headers()
-                self.end_headers()
-                self.wfile.write(b"Video added")
+                self.response(200, message=b"Video added")
+
             except Exception as e :
-                self.send_response(500)
-                self._set_cors_headers()
-                self.end_headers()
-                self.wfile.write(b"{}".format(str(e)))
+                logger.error(f"Error: {str(e)}")
+                self.response(500, message=str.encode(str(e)))
 
 
         if self.path == "/getVideoSuggestions":
@@ -94,33 +96,21 @@ class VideoHandler(BaseHTTPRequestHandler):
                     response.raise_for_status()  # Will raise exception on bad response
                     html = response.text
                     logger.debug(f"\n{'-'*50}\nReceived HTML of size:\n{len(html)}")
-
-                    self.send_response(200)
-                    self.send_header("Content-Type", "text/html; charset=utf-8")
-                    self._set_cors_headers()
-                    self.end_headers()
-                    self.wfile.write(html.encode("utf-8"))
-                    # log(f"Sent a HTML response: {len(html)} bytes")
+                    self.response(200, message=html.encode("utf-8"), headers=["Content-Type", "text/html; charset=utf-8"])
 
                 except Exception as e :
                     logger.error(f"Error: {str.encode(str(e))}")
+                    self.response(500, message=str.encode(str(e)))
 
-                    self.send_response(500)
-                    self._set_cors_headers()
-                    self.end_headers()
-                    self.wfile.write(str.encode(str(e)))
                 except requests.exceptions.HTTPError as e :
                     logger.error(f"HTTP Error: {str.encode(str(e))}")
-                    self.send_response(500)
-                    self._set_cors_headers()
-                    self.end_headers()
-                    self.wfile.write(str.encode(str(e)))
+                    self.response(500, message=str.encode(str(e)))
+
         
         else:
             logger.error(f"[404] '{self.path}' not found")
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(str.encode(self.path+ " not found"))
+            self.response(404, message=str.encode(self.path+ " not found"))
+
 
 
 # Start server on a different thread at addon load

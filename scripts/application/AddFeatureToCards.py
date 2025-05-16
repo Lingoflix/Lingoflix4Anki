@@ -1,4 +1,4 @@
-from scripts.adapters.AnkiFeatureInjector import AnkiFeatureInjector
+from scripts.adapters.FeatureInjector.AnkiFeatureInjector import AnkiFeatureInjector
 
 class AddFeatureToCards:
     def __init__(self, repo, injector):

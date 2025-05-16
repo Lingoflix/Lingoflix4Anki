@@ -2,7 +2,7 @@
 
 from scripts.domain.FeatureInjector import FeatureInjector
 from scripts.domain.Card import Card
-from scripts.adapters.AnkiCard import AnkiCard
+from scripts.adapters.Card.AnkiCard import AnkiCard
 from scripts.domain.Platforms import Platforms
 
 import aqt

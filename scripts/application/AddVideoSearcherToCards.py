@@ -2,7 +2,7 @@
 
 import urllib
 
-from scripts.adapters.AnkiFeatureInjector import AnkiFeatureInjector
+from scripts.adapters.FeatureInjector.AnkiFeatureInjector import AnkiFeatureInjector
 from scripts.adapters.VideoSearcher import VideoSearcher
 from scripts.domain.Platforms import Platforms
 
